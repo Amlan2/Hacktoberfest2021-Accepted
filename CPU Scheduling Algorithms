@@ -1,0 +1,221 @@
+//Pranav Patne
+//Problem Statement : Implement the C program for CPU Scheduling Algorithms: Shortest Job First
+(Preemptive) and Round Robin with different arrival time.
+
+
+#include<stdio.h>
+#include<stdbool.h>
+#include<limits.h>
+
+struct process_struct
+{
+  char name[8];
+  int at;
+  int bt;
+  int ct,wt,tat,rt,start_time,flag;
+}ps[100];
+
+void srtn();
+void rr();
+
+int findmax(int a, int b)
+{
+    return a>b?a:b;
+}
+
+int findmin(int a, int b)
+{
+    return a<b?a:b;
+}
+
+int main()
+{
+   int ch;
+    do{
+    printf("\nEnter : \n1.Shortest remaining time first\n2.Round robin\n3.Exit");
+    printf("\n\nEnter choice : ");
+    scanf("%d",&ch);
+    switch(ch)
+    {
+        case 1:
+                srtn();
+                break;
+        case 2:
+        	 rr();
+                break;
+        
+    }}while(ch!=3);
+    
+}
+
+
+void rr()
+{
+    int no,i,j,fcnt=0,scnt=0,interval;
+    float bt_remaining[100];
+    printf("\nEnter no of processes : ");
+    scanf("%d",&no);
+    for(i=0;i<no;i++)
+    {
+        printf("\nEnter process name : ");
+        scanf("%s",ps[i].name);
+        printf("\nEnter Burst time : ");
+        scanf("%d",&ps[i].bt);
+        bt_remaining[i]=ps[i].bt;
+        ps[i].flag=0;
+    }
+    printf("\nEnter interval  : ");
+    scanf("%d",&interval);
+   
+    printf("\nGrant Chart : \n\t\t");
+   
+    i=0;
+    while(1)
+    {
+        for(i=0;i<no;i++)
+        {
+        if(ps[i].flag==0)
+        {
+            if(bt_remaining[i]<=interval)
+            {
+                //printf("-- %s (C)--",p[i].name);
+                scnt+=bt_remaining[i];
+                ps[i].wt=scnt-ps[i].bt;
+                ps[i].tat=scnt;
+                ps[i].flag=1;
+                fcnt++;
+            }
+            else
+            {
+                //printf("-- %s --",p[i].name);
+                bt_remaining[i]-=interval;
+                scnt+=interval;
+            }
+        }
+        }
+        if(fcnt==no)
+            break;
+    }
+   
+    
+    fcnt=0,scnt=0;
+    printf("\n\tProcess \t burst time \t waiting time \t turn around time");
+    for(i=0;i<no;i++)
+    {
+        printf("\n\t%s\t\t\t%d\t\t%d\t \t%d",ps[i].name,ps[i].bt,ps[i].wt,ps[i].tat);
+        fcnt+=ps[i].wt;
+        scnt+=ps[i].tat;
+    }
+    
+    //printf("\n\n\t\t\t\tAverage : \t %d\t   \t%d\n\n",fcnt/no,scnt/no);
+    printf("\n\nAverage Turn Around time= %f ",(float)scnt/no);
+    printf("\nAverage Waiting Time= %f ",(float)fcnt/no);
+    printf("\n");
+}
+
+
+void srtn()
+{
+	int n;
+    float bt_remaining[100];
+    bool is_completed[100]={false},is_first_process=true;
+    int current_time = 0;
+    int completed = 0;;
+    float sum_tat=0,sum_wt=0,sum_rt=0,total_idle_time=0,length_cycle,prev=0;
+    float cpu_utilization;
+
+    int max_completion_time,min_arrival_time;
+
+    printf("Enter total number of processes: ");
+    scanf("%d",&n);   
+    for(int i=0;i<n;i++)
+    {
+    	printf("\nEnter process name : ");
+        scanf("%s",ps[i].name);
+        printf("\nEnter  Arrival Time: ");
+        scanf("%d",&ps[i].at);
+        printf("\nEnter Burst Time: ");
+        scanf("%d",&ps[i].bt);
+        bt_remaining[i]= ps[i].bt;
+    }
+    
+   
+    while(completed!=n)
+    {
+        //find process with min. burst time in ready queue at current time
+        int min_index = -1;
+        int minimum = INT_MAX;
+        for(int i = 0; i < n; i++) {
+            if(ps[i].at <= current_time && is_completed[i] == false) {
+                if(bt_remaining[i] < minimum) {
+                    minimum = bt_remaining[i];
+                    min_index = i;
+                }
+                if(bt_remaining[i]== minimum) {
+                    if(ps[i].at < ps[min_index].at) {
+                        minimum= bt_remaining[i];
+                        min_index = i;
+                    }
+                }
+            }
+        }
+  
+        
+        if(min_index==-1)
+        {
+            current_time++;
+        }
+        else
+        {
+            if(bt_remaining[min_index] == ps[min_index].bt)
+            {
+                        ps[min_index].start_time = current_time;
+                        total_idle_time += (is_first_process==true) ? 0 : (ps[min_index].start_time -  prev);
+                        is_first_process=false;
+            }
+            bt_remaining[min_index] -= 1;
+            current_time++; 
+            prev=current_time;
+            if(bt_remaining[min_index] == 0)
+            {
+                ps[min_index].ct = current_time;
+                ps[min_index].tat = ps[min_index].ct - ps[min_index].at;
+                ps[min_index].wt= ps[min_index].tat - ps[min_index].bt;
+                ps[min_index].rt = ps[min_index].start_time - ps[min_index].at;
+            
+            
+                sum_tat +=ps[min_index].tat;
+                sum_wt += ps[min_index].wt;
+                sum_rt += ps[min_index].rt;
+                completed++;
+                is_completed[min_index]=true;
+                //total_idle_time += (is_first_process==true) ? 0 : (ps[min_index].start_time -  prev); 
+               // prev= ps[min_index].ct; // or current_time;
+            }
+        }
+    }
+    //Calculate Length of Process completion cycle
+    max_completion_time = INT_MIN;
+    min_arrival_time = INT_MAX;
+    for(int i=0;i<n;i++)
+    {
+        max_completion_time = findmax(max_completion_time,ps[i].ct);
+        min_arrival_time = findmin(min_arrival_time,ps[i].at);
+    }
+    length_cycle = max_completion_time - min_arrival_time;
+
+    //Output
+    printf("\nGrant Chart : \n\t\t");
+    printf("\nProcess No.\tAT\tCPU Burst Time\tCT\tTAT\tWT\tRT\n");
+    for(int i=0;i<n;i++)
+     printf("%s\t\t%d\t\t%d\t%d\t%d\t%d\t%d\n",ps[i].name,ps[i].at,ps[i].bt,ps[i].ct,ps[i].tat,ps[i].wt,ps[i].rt);
+
+    printf("\n");    
+    
+    cpu_utilization = (float)(length_cycle - total_idle_time)/ length_cycle;
+
+    printf("\nAverage Turn Around time= %f ",(float)sum_tat/n);
+    printf("\nAverage Waiting Time= %f ",(float)sum_wt/n);
+    printf("\nAverage Response Time= %f ",(float)sum_rt/n);   
+    printf("\n\n");
+}
